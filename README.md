@@ -240,6 +240,7 @@ python src/main.py
 9. **Sección: Distribución geográfica de los viajes (mapa interactivo)**  
 10. **Sección adicional para visualizar archivo HTML local de mapa**  
 
+
 ## 10. Conclusiones
 
 A través de las seis visualizaciones solicitadas, este proyecto permite:
