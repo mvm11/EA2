@@ -186,11 +186,12 @@ Este patrón se repite para cada una de las seis visualizaciones solicitadas.
    ```
    El archivo `requirements.txt` contiene, como mínimo:
    ```
-   pandas
-   matplotlib
-   seaborn
-   plotly
-   nbformat
+   pandas==2.2.2
+   numpy==1.26.4
+   matplotlib==3.8.4
+   seaborn==0.13.2
+   plotly==5.22.0
+   nbformat==5.10.4
    ```
 
 3. **Estructura de carpetas**  
