@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 from typing import Dict
 from domain.model.accommodation.gateways.get_average_expense_by_accommodation import GetAverageExpenseByAccommodation
 
@@ -17,19 +18,15 @@ class GetAverageExpenseByAccommodationCSV(GetAverageExpenseByAccommodation):
         return avg_expense.to_dict()
 
     def _generate_chart(self, avg_expense: pd.Series):
-        plt.figure(figsize=(10, 5))
-        bars = plt.bar(avg_expense.index, avg_expense.values, color='skyblue')
-        plt.title('Average Daily Expense by Accommodation Type')
-        plt.xlabel('Tipo de Alojamiento')
-        plt.ylabel('Gasto Diario Promedio')
-        plt.xticks(rotation=45)
-        plt.grid(axis='y', linestyle='--', alpha=0.5)
-
-        for bar in bars:
-            yval = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2, yval + 1, f'{yval:.2f}', ha='center', va='bottom')
-
         os.makedirs(self.output_dir, exist_ok=True)
+
+        plt.figure(figsize=(8, 6))
+        sns.boxplot(data=avg_expense.to_frame().T, orient='h')
+        sns.stripplot(x=avg_expense.values, y=avg_expense.index, color='black', size=8)
+        plt.title("Average Daily Expense by Accommodation Type")
+        plt.xlabel("Average Expense (USD)")
+        plt.ylabel("Accommodation Type")
+
         output_path = os.path.join(self.output_dir, 'average_expense_by_accommodation.png')
         plt.tight_layout()
         plt.savefig(output_path)

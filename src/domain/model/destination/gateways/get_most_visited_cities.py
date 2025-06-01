@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import List, Tuple
 
 class GetMostVisitedCities(ABC):
     @abstractmethod
-    def execute(self) -> Dict[str, int]:
-        """Returns the most visited cities"""
+    def execute(self, top_n: int = 10) -> List[Tuple[str, int]]:
+        """Returns a list of the most visited cities with visit count"""
         pass

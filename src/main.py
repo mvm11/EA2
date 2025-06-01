@@ -1,7 +1,8 @@
 import os
 
-from application.destination.get_longest_stays_by_destination import GetLongestStaysByDestinationUseCase
+from application.destination.get_longest_stays_by_destination_use_case import GetLongestStaysByDestinationUseCase
 from application.satisfaction.get_average_rating_by_country_use_case import GetAverageRatingByCountryUseCase
+from domain.model.accommodation.gateways.get_expense_boxplot_by_accommodation_type import GetExpenseBoxplotByAccommodationType
 from infrastructure.satisfaction.get_average_rating_by_country_csv import GetAverageRatingByCountryCSV
 
 from application.destination.get_average_stay_by_city_use_case import GetAverageStayByCityUseCase
@@ -20,6 +21,20 @@ from infrastructure.trip.get_most_popular_months_csv import GetMostPopularMonths
 
 from application.accommodation.get_average_expense_by_accommodation_use_case import GetAverageExpenseByAccommodationUseCase
 from infrastructure.accommodation.get_average_expense_by_accommodation_csv import GetAverageExpenseByAccommodationCSV
+
+from application.accommodation.get_average_rating_by_accommodation_use_case import GetAverageRatingByAccommodationUseCase
+from infrastructure.accommodation.get_average_rating_by_accommodation_csv import GetAverageRatingByAccommodationCSV
+
+from application.accommodation.get_expense_boxplot_by_accommodation_type_use_case import GetExpenseBoxplotByAccommodationTypeUseCase
+from infrastructure.accommodation.get_expense_boxplot_by_accommodation_type_csv import GetExpenseBoxplotByAccommodationTypeCSV
+
+from application.satisfaction.get_rating_boxplot_by_country_use_case import GetRatingBoxplotByCountryUseCase
+from infrastructure.satisfaction.get_rating_boxplot_by_country_csv import GetRatingBoxplotByCountryCSV
+
+from application.satisfaction.get_rating_boxplot_by_country_use_case import GetRatingBoxplotByCountryUseCase
+from infrastructure.satisfaction.get_rating_boxplot_by_country_csv import GetRatingBoxplotByCountryCSV
+
+
 
 def main():
     base_path = os.path.dirname(os.path.abspath(__file__))
@@ -47,7 +62,7 @@ def main():
     visited_use_case = GetMostVisitedCitiesUseCase(visited_repo)
     visited_cities = visited_use_case.execute()
     print("\n=== Most Visited Cities ===")
-    for city, count in visited_cities.items():
+    for city, count in visited_cities:
         print(f"{city}: {count} visitas")
 
     # --- Gasto diario por tipo de alojamiento ---
@@ -57,6 +72,14 @@ def main():
     print("\n=== Average Daily Expense by Accommodation Type ===")
     for acc_type, expense in average_expenses.items():
         print(f"{acc_type}: ${expense:.2f}")
+
+    # --- Valoración promedio por tipo de alojamiento ---
+    rating_repo = GetAverageRatingByAccommodationCSV(csv_path=dataset_path, output_dir=output_dir)
+    rating_use_case = GetAverageRatingByAccommodationUseCase(rating_repo)
+    avg_ratings_accommodation = rating_use_case.execute()
+    print("\n=== Average Rating by Accommodation Type ===")
+    for acc_type, rating in avg_ratings_accommodation.items():
+        print(f"{acc_type}: {rating}/5")
 
     # --- Destinos con estancias más largas en promedio ---
     longest_repo = GetLongestStaysByDestinationCSV(csv_path=dataset_path, output_dir=output_dir)
@@ -78,6 +101,17 @@ def main():
     print("\n=== Most Popular Travel Months ===")
     for month, count in month_counts.items():
         print(f"{month}: {count} viajes")
+
+    # --- Boxplot: Gasto diario por tipo de alojamiento ---
+    expense_boxplot_repo = GetExpenseBoxplotByAccommodationTypeCSV(csv_path=dataset_path, output_dir=output_dir)
+    expense_boxplot_use_case = GetExpenseBoxplotByAccommodationTypeUseCase(expense_boxplot_repo)
+    expense_boxplot_use_case.execute()
+
+    # --- Boxplot de valoraciones por país ---
+    rating_boxplot_repo = GetRatingBoxplotByCountryCSV(csv_path=dataset_path, output_dir=output_dir)
+    rating_boxplot_use_case = GetRatingBoxplotByCountryUseCase(rating_boxplot_repo)
+    rating_boxplot_use_case.execute()   
+
 
 if __name__ == '__main__':
     main()

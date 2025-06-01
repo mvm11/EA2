@@ -1,48 +1,60 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from domain.model.trip.gateways.get_most_popular_months import GetMostPopularMonths
+import seaborn as sns
 from typing import Dict
+from domain.model.trip.gateways.get_most_popular_months import GetMostPopularMonths
 
 class GetMostPopularMonthsCSV(GetMostPopularMonths):
     def __init__(self, csv_path: str, output_dir: str = None):
         self.csv_path = csv_path
         self.output_dir = output_dir or os.path.join(os.path.dirname(__file__), '..', '..', '..', 'docs')
 
-    def execute(self) -> Dict[str, int]:
-        df = pd.read_csv(self.csv_path, parse_dates=['fecha'])
+    def execute(self) -> Dict[str, Dict[str, float]]:
+        df = pd.read_csv(self.csv_path)
 
-        df['mes'] = df['fecha'].dt.month
-        month_counts = df['mes'].value_counts().sort_index()
+        # Convertir fechas a datetime y extraer mes
+        df['fecha'] = pd.to_datetime(df['fecha'], errors='coerce')
+        df = df.dropna(subset=['fecha'])
+        df['mes'] = df['fecha'].dt.month_name()
 
-        # Mapear número a nombre del mes
-        month_names = {
-            1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
-            5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
-            9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+        viajes_por_mes = df['mes'].value_counts().sort_index()
+        duracion_por_mes = df.groupby('mes')['duracion_estancia'].mean().round(2)
+        gasto_por_mes = df.groupby('mes')['gasto_diario'].mean().round(2)
+        valoracion_por_mes = df.groupby('mes')['valoracion'].mean().round(2)
+
+        self._generate_dashboard(viajes_por_mes, duracion_por_mes, gasto_por_mes, valoracion_por_mes)
+
+        return {
+            'viajes_por_mes': viajes_por_mes.to_dict(),
+            'duracion_promedio_por_mes': duracion_por_mes.to_dict(),
+            'gasto_diario_promedio_por_mes': gasto_por_mes.to_dict(),
+            'valoracion_promedio_por_mes': valoracion_por_mes.to_dict()
         }
-        month_counts.index = month_counts.index.map(month_names)
 
-        self._generate_chart(month_counts)
-
-        return month_counts.to_dict()
-
-    def _generate_chart(self, month_counts: pd.Series):
-        plt.figure(figsize=(10, 5))
-        bars = plt.bar(month_counts.index, month_counts.values, color='tomato')
-        plt.title('Most Popular Travel Months')
-        plt.xlabel('Mes')
-        plt.ylabel('Cantidad de Viajes')
-        plt.xticks(rotation=45)
-        plt.grid(axis='y', linestyle='--', alpha=0.5)
-
-        for bar in bars:
-            yval = bar.get_height()
-            plt.text(bar.get_x() + bar.get_width()/2, yval + 0.3, f'{int(yval)}', ha='center', va='bottom')
-
+    def _generate_dashboard(self, viajes, duracion, gasto, valoracion):
         os.makedirs(self.output_dir, exist_ok=True)
+        fig, axs = plt.subplots(2, 2, figsize=(14, 10))
+        fig.suptitle("Monthly Travel Patterns", fontsize=16)
+
+        sns.barplot(x=list(viajes.index), y=viajes.values, ax=axs[0, 0])
+        axs[0, 0].set_title("Number of Trips per Month")
+        axs[0, 0].tick_params(axis='x', rotation=45)
+
+        sns.lineplot(x=list(duracion.index), y=duracion.values, ax=axs[0, 1], marker="o")
+        axs[0, 1].set_title("Average Stay Duration")
+
+        sns.lineplot(x=list(gasto.index), y=gasto.values, ax=axs[1, 0], marker="s", color='green')
+        axs[1, 0].set_title("Average Daily Expense")
+
+        sns.lineplot(x=list(valoracion.index), y=valoracion.values, ax=axs[1, 1], marker="^", color='orange')
+        axs[1, 1].set_title("Average Rating")
+
+        for ax in axs.flat:
+            ax.grid(True)
+
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
         output_path = os.path.join(self.output_dir, 'most_popular_months.png')
-        plt.tight_layout()
         plt.savefig(output_path)
         plt.close()
-        print(f"[✓] Chart saved to: {output_path}")
+        print(f"[✓] Dashboard saved to: {output_path}")
